@@ -1,0 +1,32 @@
+﻿@page "/admin/"
+@inject AuthenticationStateProvider AuthState
+@attribute [Authorize]
+
+<h1>Welcome, @Username!</h1>
+You can only see this content if you're authenticated.
+<br />
+<img src="@Picture">
+
+<SurveyPrompt Title="How is Blazor working for you?" />
+
+@code { 
+  private string Username = "Anonymous User";
+  private string Picture = "";
+
+  protected override async Task OnInitializedAsync()
+  {
+    var state = await AuthState.GetAuthenticationStateAsync();
+
+    Username = state.User.Claims
+                .Where(c => c.Type.EndsWith("givenname") || c.Type.EndsWith("surname"))
+                .Select(c => c.Value)
+                .Aggregate((i, j) => i + " " + j) ?? string.Empty;
+
+    Picture = state.User.Claims
+                .Where(c => c.Type.Equals("picture"))
+                .Select(c => c.Value)
+                .FirstOrDefault() ?? string.Empty;
+
+    await base.OnInitializedAsync();
+  }
+}
