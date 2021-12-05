@@ -13,6 +13,10 @@ using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
+using Microsoft.OpenApi.Models;
+using Microsoft.AspNetCore.Authorization;
+using Auth0.ManagementApi;
+using Backend.Services;
 
 namespace Backend
 {
@@ -25,13 +29,15 @@ namespace Backend
             services.AddDbContext<DataContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DataContext")));
             services.TryAddTransient<MovieRepository>();
             services.AddSingleton<WeatherForecastService>();
+            services.AddSingleton<IManagementConnection, HttpClientManagementConnection>();
+            services.TryAddTransient<Auth0Service>();
 
             services.AddControllers();
 
             services.AddRazorPages();
             services.AddServerSideBlazor();
 
-            ConfigureCookieAuth(services, Configuration);
+            ConfigureAuth(services, Configuration);
             //ConfigureJwtAuth(services, Configuration);
 
             services.AddHttpContextAccessor();
@@ -56,25 +62,9 @@ namespace Backend
             services.AddSpaStaticFiles(configuration => { configuration.RootPath = "ClientApp/build"; });
         }
 
-        internal static void ConfigureJwtAuth(IServiceCollection services, IConfiguration Configuration)
+        internal static void ConfigureAuth(IServiceCollection services, IConfiguration Configuration)
         {
-            services.AddAuthentication(options =>
-            {
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            }).AddJwtBearer(options =>
-            {
-                options.Authority = $"https://{Configuration["Auth0:Domain"]}";
-                options.Audience = Configuration["Auth0:Audience"];
-                options.TokenValidationParameters = new TokenValidationParameters()
-                {
-                    NameClaimType = ClaimTypes.NameIdentifier
-                };
-            });
-        }
-
-        internal static void ConfigureCookieAuth(IServiceCollection services, IConfiguration Configuration)
-        {
+            var domain = $"https://{Configuration["Auth0:Domain"]}";
             services.Configure<CookiePolicyOptions>(options =>
             {
                 // This lambda determines whether user consent for non-essential cookies is needed for a given request.
@@ -85,15 +75,25 @@ namespace Backend
             // Add authentication services
             services.AddAuthentication(options =>
             {
-                options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-                options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(options =>
+            {
+                options.Authority = domain;
+                options.Audience = Configuration["Auth0:Audience"];
+                options.TokenValidationParameters = new TokenValidationParameters()
+                {
+                    ValidAudience = Configuration["Auth0:Audience"],
+                    ValidIssuer = $"https://{Configuration["Auth0:Domain"]}",
+                    NameClaimType = ClaimTypes.NameIdentifier,
+                };
             })
             .AddCookie()
             .AddOpenIdConnect("Auth0", options =>
             {
                 // Set the authority to your Auth0 domain
-                options.Authority = $"https://{Configuration["Auth0:Domain"]}";
+                options.Authority = domain;
 
                 // Configure the Auth0 Client ID and Client Secret
                 options.ClientId = Configuration["Auth0:ClientId"];
@@ -119,7 +119,7 @@ namespace Backend
                     // handle the logout redirection
                     OnRedirectToIdentityProviderForSignOut = (context) =>
                     {
-                        var logoutUri = $"https://{Configuration["Auth0:Domain"]}/v2/logout?client_id={Configuration["Auth0:ClientId"]}";
+                        var logoutUri = $"{domain}/v2/logout?client_id={Configuration["Auth0:ClientId"]}";
 
                         var postLogoutUri = context.Properties.RedirectUri;
                         if (!string.IsNullOrEmpty(postLogoutUri))
@@ -139,16 +139,15 @@ namespace Backend
                         return Task.CompletedTask;
                     }
                 };
-            }).AddJwtBearer(options =>
-            {
-                options.Authority = $"https://{Configuration["Auth0:Domain"]}";
-                options.Audience = Configuration["Auth0:Audience"];
-                options.TokenValidationParameters = new TokenValidationParameters()
-                {
-                    NameClaimType = ClaimTypes.NameIdentifier
-                };
             });
 
+            services.AddAuthorization(options =>
+            {
+                options.AddPolicy(PolicyRole.WRITER, policy => policy.RequireClaim("permissions", "perm:writer"));
+                options.AddPolicy(PolicyRole.EDITOR, policy => policy.RequireClaim("permissions", "perm:editor"));
+                options.AddPolicy(PolicyRole.MANAGER, policy => policy.RequireClaim("permissions", "perm:manager"));
+                options.AddPolicy(PolicyRole.ADMIN, policy => policy.RequireClaim("permissions", "perm:admin"));
+            });
         }
 
         internal static void SetupSwagger(SwaggerGenOptions options)
@@ -157,6 +156,27 @@ namespace Backend
             var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
             var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
             options.IncludeXmlComments(xmlPath);
+
+            var securitySchema = new OpenApiSecurityScheme
+            {
+                Description = "Using the Authorization header with the Bearer scheme.",
+                Name = "Authorization",
+                In = ParameterLocation.Header,
+                Type = SecuritySchemeType.Http,
+                Scheme = "bearer",
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            };
+
+            options.AddSecurityDefinition("Bearer", securitySchema);
+
+            options.AddSecurityRequirement(new OpenApiSecurityRequirement
+                {
+                    { securitySchema, new[] { "Bearer" } }
+                });
         }
 
         public static void ConfigureSwagger(WebApplication app, WebApplicationBuilder builder)
