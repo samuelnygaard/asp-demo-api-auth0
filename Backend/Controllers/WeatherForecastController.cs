@@ -1,9 +1,4 @@
-using Backend.Data;
-using Backend.Services;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-
-namespace WebApplication4.Controllers
+namespace Backend.Controllers
 {
     /// <summary>
     /// WeatherForecastController test
@@ -33,15 +28,16 @@ namespace WebApplication4.Controllers
         public async Task<IEnumerable<WeatherForecast>> Get()
         {
             log.LogInformation("Get");
-           
+
             try
             {
                 var user = await _auth0Service.UpdateUserAppMetaDataAsync(User.Identity.Name, new { date = DateTime.Now });
             }
-            catch (Exception ex) {
+            catch (Exception ex)
+            {
                 log.LogInformation("Exception", ex);
             }
-            
+
             return await _weatherForecastService.GetForecastAsync(DateTime.Now);
         }
     }

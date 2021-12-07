@@ -1,5 +1,3 @@
-using Backend.Data;
-
 namespace Backend.Services
 {
     public class WeatherForecastService

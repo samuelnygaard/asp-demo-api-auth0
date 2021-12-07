@@ -1,28 +1,32 @@
-﻿using System.Text.Json;
-using Auth0.ManagementApi;
+﻿using Auth0.ManagementApi;
 using Auth0.ManagementApi.Models;
-using Backend.Data;
 
 namespace Backend.Services
 {
     public class Auth0Service
     {
+        private readonly string domain;
+        private readonly string clientId;
+        private readonly string clientSecret;
         private readonly ManagementApiClient client;
 
         public Auth0Service(IConfiguration configuration)
         {
-            client = new ManagementApiClient(configuration["Auth0:ManagementToken"], configuration["Auth0:Domain"]);
+            domain = configuration["Auth0:Domain"];
+            clientId = configuration["Auth0:ClientId"];
+            clientSecret = configuration["Auth0:ClientSecret"];
+            client = new ManagementApiClient(configuration["Auth0:ManagementToken"], domain);
         }
 
         public Task<User> GetUserAsync(string? userId)
         {
-            if (String.IsNullOrEmpty(userId)) throw new ArgumentNullException("userId");
+            if (string.IsNullOrEmpty(userId)) throw new ArgumentNullException("userId");
             return client.Users.GetAsync(userId);
         }
 
         public Task<User> UpdateUserAppMetaDataAsync(string? userId, dynamic appMetaData)
         {
-            if (String.IsNullOrEmpty(userId)) throw new ArgumentNullException("userId");
+            if (string.IsNullOrEmpty(userId)) throw new ArgumentNullException("userId");
 
             return client.Users.UpdateAsync(userId, new UserUpdateRequest()
             {
@@ -43,7 +47,7 @@ namespace Backend.Services
 
         public async Task AddUserRoleAsync(string? userId, string roleName)
         {
-            if (String.IsNullOrEmpty(userId)) throw new ArgumentNullException("userId");
+            if (string.IsNullOrEmpty(userId)) throw new ArgumentNullException("userId");
 
             var role = await GetRoleByName(roleName);
 
@@ -57,7 +61,7 @@ namespace Backend.Services
 
         public async Task RemveUserRoleAsync(string? userId, string roleName)
         {
-            if (String.IsNullOrEmpty(userId)) throw new ArgumentNullException("userId");
+            if (string.IsNullOrEmpty(userId)) throw new ArgumentNullException("userId");
 
             var role = await GetRoleByName(roleName);
 
