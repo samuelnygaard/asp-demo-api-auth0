@@ -1,6 +1,5 @@
 
 using Backend;
-using Data;
 using Microsoft.AspNetCore.SpaServices.ReactDevelopmentServer;
 
 var builder = WebApplication.CreateBuilder(args);

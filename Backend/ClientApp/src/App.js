@@ -8,17 +8,19 @@ import { Counter } from "./components/Counter";
 import "./custom.css";
 import PrivateRoute from "./components/common/PrivateRoute";
 import { Switch } from "react-router-dom";
+import { Payment } from "./components/Payment";
 
 const App = () => {
-  return (
-    <Layout>
-      <Switch>
-        <Route exact path="/" component={Home} />
-        <Route path="/counter" component={Counter} />
-        <PrivateRoute path="/fetch-data" component={FetchData} />
-      </Switch>
-    </Layout>
-  );
+    return (
+        <Layout>
+            <Switch>
+                <Route exact path="/" component={Home} />
+                <Route path="/counter" component={Counter} />
+                <PrivateRoute path="/payment" component={Payment} />
+                <PrivateRoute path="/fetch-data" component={FetchData} />
+            </Switch>
+        </Layout>
+    );
 };
 
 export default App;

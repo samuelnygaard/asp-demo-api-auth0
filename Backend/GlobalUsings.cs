@@ -9,7 +9,11 @@ global using Microsoft.EntityFrameworkCore;
 global using Microsoft.AspNetCore.Authorization;
 global using Microsoft.AspNetCore.Mvc;
 
+global using Stripe;
+global using Stripe.Checkout;
+
 global using Backend.Models;
 global using Backend.Services;
 global using Data;
 global using Data.Repositories;
+global using Backend.Handlers;

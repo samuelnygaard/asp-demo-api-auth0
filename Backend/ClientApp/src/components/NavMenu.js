@@ -58,6 +58,12 @@ export const NavMenu = () => {
                             {isAuthenticated && (
                                 <>
                                     <NavItem>
+                                        <NavLink tag={Link} className="text-dark" to="/payment">
+                                            Payment
+                                        </NavLink>
+                                    </NavItem>
+
+                                    <NavItem>
                                         <NavLink tag={Link} className="text-dark" to="/fetch-data">
                                             Fetch data
                                         </NavLink>

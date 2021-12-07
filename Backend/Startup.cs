@@ -20,6 +20,8 @@ namespace Backend
             services.AddDbContext<DataContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DataContext")));
             services.TryAddTransient<MovieRepository>();
             services.AddSingleton<WeatherForecastService>();
+            services.AddSingleton<StripeService>();
+            
             services.AddSingleton<IManagementConnection, HttpClientManagementConnection>();
             services.TryAddTransient<Auth0Service>();
 
@@ -87,7 +89,7 @@ namespace Backend
                 {
                     ValidAudience = Configuration["Auth0:Audience"],
                     ValidIssuer = domain,
-                    NameClaimType = ClaimTypes.NameIdentifier,
+                    NameClaimType = ClaimTypes.NameIdentifier
                 };
             })
             .AddCookie()
