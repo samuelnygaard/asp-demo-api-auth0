@@ -10,14 +10,13 @@ namespace Backend.Controllers
     public class WeatherForecastController : ControllerBase
     {
         private readonly ILogger<WeatherForecastController> log;
-        private readonly WeatherForecastService _weatherForecastService;
-        private readonly Auth0Service _auth0Service;
+        private readonly WeatherForecastHandler weatherForecastHandler;
 
-        public WeatherForecastController(ILogger<WeatherForecastController> logger, WeatherForecastService _weatherForecastService, Auth0Service _auth0Service)
+
+        public WeatherForecastController(ILogger<WeatherForecastController> logger, WeatherForecastHandler weatherForecastHandler)
         {
             this.log = logger;
-            this._weatherForecastService = _weatherForecastService;
-            this._auth0Service = _auth0Service;
+            this.weatherForecastHandler = weatherForecastHandler;
         }
 
         /// <summary>
@@ -29,16 +28,7 @@ namespace Backend.Controllers
         {
             log.LogInformation("Get");
 
-            try
-            {
-                var user = await _auth0Service.UpdateUserAppMetaDataAsync(User.Identity.Name, new { date = DateTime.Now });
-            }
-            catch (Exception ex)
-            {
-                log.LogInformation("Exception", ex);
-            }
-
-            return await _weatherForecastService.GetForecastAsync(DateTime.Now);
+            return await weatherForecastHandler.GetForecastAsync(User);
         }
     }
 }

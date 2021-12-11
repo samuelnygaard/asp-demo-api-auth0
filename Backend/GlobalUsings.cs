@@ -2,6 +2,7 @@
 global using System.Linq;
 global using System.Text.Json;
 global using System.Collections.Generic;
+global using System.Security.Claims;
 global using System.ComponentModel.DataAnnotations;
 global using System.Reflection;
 

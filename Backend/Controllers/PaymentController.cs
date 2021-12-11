@@ -19,6 +19,7 @@ namespace Backend.Controllers
             this.log = logger;
             this.stripeService = _stripeService;
         }
+        
 
         /// <summary>
         /// Test
@@ -29,12 +30,30 @@ namespace Backend.Controllers
         public async Task<IActionResult> Get()
         {
             log.LogInformation("Stripe Get");
-            
+
             var referer = Request.Headers["Referer"].ToString().ToLower();
 
             var session = stripeService.CreateSession(referer, null);
 
             return Ok(new { session.Url });
+        }
+
+        /// <summary>
+        /// Test
+        /// </summary>
+        /// <returns></returns>
+        [Authorize]
+        [HttpGet]
+        [Route("Link")]
+        public async Task<IActionResult> GetLink()
+        {
+            log.LogInformation("Stripe Get");
+
+            var referer = Request.Headers["Referer"].ToString().ToLower();
+
+            var link = stripeService.CreateAccountLink(referer, User.GetEmail());
+
+            return Ok(new { link.Url });
         }
 
         /// <summary>

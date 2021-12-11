@@ -20,10 +20,11 @@ namespace Backend
             services.AddDbContext<DataContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DataContext")));
             services.TryAddTransient<MovieRepository>();
             services.AddSingleton<WeatherForecastService>();
-            services.AddSingleton<StripeService>();
-            
+            services.AddSingleton<WeatherForecastHandler>();
+
             services.AddSingleton<IManagementConnection, HttpClientManagementConnection>();
-            services.TryAddTransient<Auth0Service>();
+            services.AddSingleton<StripeService>();
+            services.AddSingleton<Auth0Service>();
 
             services.AddControllers();
 
@@ -59,8 +60,8 @@ namespace Backend
             var domain = $"https://{Configuration["Auth0:Domain"]}";
             services.Configure<CookiePolicyOptions>(options =>
             {
-            // This lambda determines whether user consent for non-essential cookies is needed for a given request.
-            options.CheckConsentNeeded = context => true;
+                // This lambda determines whether user consent for non-essential cookies is needed for a given request.
+                options.CheckConsentNeeded = context => true;
                 options.MinimumSameSitePolicy = SameSiteMode.None;
             });
 
@@ -95,34 +96,34 @@ namespace Backend
             .AddCookie()
             .AddOpenIdConnect("Auth0", options =>
             {
-            // Set the authority to your Auth0 domain
-            options.Authority = domain;
+                // Set the authority to your Auth0 domain
+                options.Authority = domain;
 
-            // Configure the Auth0 Client ID and Client Secret
-            options.ClientId = Configuration["Auth0:ClientId"];
+                // Configure the Auth0 Client ID and Client Secret
+                options.ClientId = Configuration["Auth0:ClientId"];
                 options.ClientSecret = Configuration["Auth0:ClientSecret"];
 
-            // Set response type to code
-            options.ResponseType = "code";
+                // Set response type to code
+                options.ResponseType = "code";
 
-            // Configure the scope
-            options.Scope.Clear();
+                // Configure the scope
+                options.Scope.Clear();
                 options.Scope.Add("openid");
                 options.Scope.Add("profile");
                 options.Scope.Add("email");
 
-            // Set the callback path, so Auth0 will call back to http://localhost:3000/admin/auth/callback
-            // Also ensure that you have added the URL as an Allowed Callback URL in your Auth0 dashboard
-            options.CallbackPath = new PathString("/callback");
+                // Set the callback path, so Auth0 will call back to http://localhost:3000/admin/auth/callback
+                // Also ensure that you have added the URL as an Allowed Callback URL in your Auth0 dashboard
+                options.CallbackPath = new PathString("/callback");
 
-            // Configure the Claims Issuer to be Auth0
-            options.ClaimsIssuer = "Auth0";
+                // Configure the Claims Issuer to be Auth0
+                options.ClaimsIssuer = "Auth0";
 
                 options.Events = new OpenIdConnectEvents
                 {
-                // handle the logout redirection
-                OnRedirectToIdentityProviderForSignOut = (context) =>
-            {
+                    // handle the logout redirection
+                    OnRedirectToIdentityProviderForSignOut = (context) =>
+                    {
                         var logoutUri = $"{domain}/v2/logout?client_id={Configuration["Auth0:ClientId"]}";
 
                         var postLogoutUri = context.Properties.RedirectUri;
@@ -130,8 +131,8 @@ namespace Backend
                         {
                             if (postLogoutUri.StartsWith("/"))
                             {
-                            // transform to absolute
-                            var request = context.Request;
+                                // transform to absolute
+                                var request = context.Request;
                                 postLogoutUri = request.Scheme + "://" + request.Host + request.PathBase + postLogoutUri;
                             }
                             logoutUri += $"&returnTo={ Uri.EscapeDataString(postLogoutUri)}";

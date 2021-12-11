@@ -2,6 +2,7 @@ namespace Backend.Services
 {
     public class WeatherForecastService
     {
+        private readonly Random random = new Random();
         private static readonly string[] Summaries = new[] { "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching" };
 
         public Task<WeatherForecast[]> GetForecastAsync(DateTime startDate)
@@ -9,8 +10,8 @@ namespace Backend.Services
             return Task.FromResult(Enumerable.Range(1, 5).Select(index => new WeatherForecast
             {
                 Date = startDate.AddDays(index),
-                TemperatureC = Random.Shared.Next(-20, 55),
-                Summary = Summaries[Random.Shared.Next(Summaries.Length)]
+                TemperatureC = random.Next(-20, 55),
+                Summary = Summaries[random.Next(Summaries.Length)]
             }).ToArray());
         }
     }

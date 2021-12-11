@@ -9,8 +9,13 @@ export const Payment = () => {
         const token = await getTokenSilently();
         console.log('token', token);
         const data = await weatherForecastApi.getPayment(token);
-        location.href = data.url;
+        if (data && data.url) openInNewTab(data.url);
     };
+
+    const openInNewTab = (url) => {
+        const newWindow = window.open(url, '_blank', 'noopener,noreferrer')
+        if (newWindow) newWindow.opener = null
+    }
 
     useEffect(() => {
         getPayment();

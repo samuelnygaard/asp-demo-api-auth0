@@ -11,6 +11,27 @@
             this.WebhookSigningKey = configuration["Stripe:WebhookSigningKey"];
         }
 
+        private Account CreateAccount(string email)
+        {
+            var options = new AccountCreateOptions { Email = email, Type = "standard" };
+            var service = new AccountService(stripeClient);
+            return service.Create(options);
+        }
+
+        public AccountLink CreateAccountLink(string domain, string email)
+        {
+            var account = CreateAccount(email);
+            var options = new AccountLinkCreateOptions
+            {
+                Account = account.Id,
+                RefreshUrl = domain + "/reauth",
+                ReturnUrl = domain + "/reauth",
+                Type = "account_onboarding",
+            };
+            var service = new AccountLinkService(stripeClient);
+            return service.Create(options);
+        }
+
         public Session CreateSession(string domain, string? stripeCustomerId)
         {
             var options = new SessionCreateOptions
